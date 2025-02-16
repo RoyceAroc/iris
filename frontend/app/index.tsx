@@ -1,8 +1,10 @@
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { CameraView, CameraType } from 'expo-camera';
 import { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Haptics from 'expo-haptics';
+import 'react-native-get-random-values';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function Index() {
   const [facing, setFacing] = useState<CameraType>('back');
@@ -26,21 +28,16 @@ export default function Index() {
       interval = setInterval(async () => {
         if (cameraRef.current) {
           try {
-            const photo = await cameraRef.current.takePictureAsync({ base64: false });
-            if (photo) {
-              const fileUri = `${localFolderPath}frame_${Date.now()}.jpg`;
-              await FileSystem.moveAsync({
-                from: photo.uri,
-                to: fileUri,
-              });
-              console.log(`Saved frame to: ${fileUri}`);
-              const isHazard = await checkForHazard(fileUri);
+            const uniqueId = uuidv4();
+            const photo = await cameraRef.current.takePictureAsync({ quality: 0.5, base64: true, skipProcessing: true });
+            if (photo && photo.base64) {
+              const isHazard = await checkForHazard(photo.base64, uniqueId);
               if (isHazard) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
               }
             }
           } catch (error) {
-            console.error('Error capturing frame:', error);
+            console.error('Error taking pic:', error);
           }
         }
       }, 1000);
@@ -48,26 +45,18 @@ export default function Index() {
     return () => clearInterval(interval);
   }, [isRecording]);
 
-  function createFormData(imageUri: any) {
-    const formData = new FormData();
-    const file = {
-      uri: imageUri,
-      name: `frame_${Date.now()}.jpg`,
-      type: 'image/jpg',
-    };
-    formData.append('image', file as any);
-    return formData;
-  }
-
-  async function checkForHazard(imageUri: any) {
+  async function checkForHazard(imageBase64: string, uniqueId: string) {
     try {
       const URL = "SOMEHTING HERE"
       const response = await fetch(URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/json',
         },
-        body: createFormData(imageUri),
+        body: JSON.stringify({
+          image: imageBase64,
+          id: uniqueId
+        }),
       });
       const data = await response.json();
       return data.is_hazard;
@@ -78,7 +67,7 @@ export default function Index() {
   }
   return (
     <View style={styles.container}>
-      <CameraView ref={cameraRef} style={styles.camera} facing={facing} onCameraReady={() => setIsRecording((prev) => !prev)}>
+      <CameraView flash='off' ref={cameraRef} style={styles.camera} facing={facing} onCameraReady={() => setIsRecording((prev) => !prev)}>
       </CameraView>
     </View >
   );
@@ -104,3 +93,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+
