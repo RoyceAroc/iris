@@ -18,21 +18,6 @@ function base64ToArrayBuffer(base64: string) {
 }
 
 export default function Index() {
-  async function test() {
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      allowsRecordingIOS: false,
-      shouldDuckAndroid: true,
-    });
-
-    // Stop any previous speech and speak new content
-    Speech.stop();
-    Speech.speak("bro pls work", {
-      rate: 1.0,
-      language: "en", // Set appropriate language
-    });
-  }
-  test();
   const [facing, setFacing] = useState<CameraType>("back");
   const cameraRef = useRef<CameraView>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -54,10 +39,24 @@ export default function Index() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
 
-      setCaptions((prevCaptions: { [x: string]: string }) => ({
-        ...prevCaptions,
-        [uid]: prevCaptions[uid] ? prevCaptions[uid] + " " + token : token,
-      }));
+      if (token.trim() == "<end>") {
+        Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          allowsRecordingIOS: false,
+          shouldDuckAndroid: true,
+        });
+        Speech.stop();
+        Speech.speak(captions[uid], {
+          rate: 1.0,
+          language: "en",
+        });
+      }
+
+      if (captions[uid]) {
+        captions[uid] = captions[uid] + " " + token;
+      } else {
+        captions[uid] = token;
+      }
     };
     ws.current.onerror = (error) => {
       console.error("WebSocket error:", error);
@@ -114,7 +113,6 @@ export default function Index() {
       <CameraView
         mute={true}
         animateShutter={false}
-        skipProcessing={true}
         flash="off"
         ref={cameraRef}
         style={{ flex: 1 }}
