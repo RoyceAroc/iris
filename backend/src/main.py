@@ -1,11 +1,13 @@
 import transformers
+import imagehash
 import asyncio
 import picows
 import uvloop
 
 from models.base import Frame, DeviceModel, VendorModel, FrameStatus
-from models.llava import LlavaModel
 from models.groq import LlamaVisionModel
+from models.llava import LlavaModel
+from collections import deque
 
 transformers.logging.set_verbosity_error()
 
@@ -18,11 +20,27 @@ class Server(picows.WSListener):
     ) -> None:
         self.caption_model = caption_model
         self.classify_model = classify_model
+
+        self.hashes = deque(maxlen=3)
+        self.similarity_threshold = 5
+
         super().__init__()
 
     def handle_frame(
         self, transport: picows.WSTransport, scene_frame: Frame, caption_id: str
     ) -> None:
+        # Compute perceptual hash of the new frame
+        new_hash = imagehash.phash(scene_frame.as_image())
+
+        # Check similarity within last 3 frames of sliding window
+        for cached_hash in self.hashes:
+            if (cached_hash - new_hash) <= self.similarity_threshold:
+                print(cached_hash - new_hash)
+                print(f"Skipping similar frame for {caption_id}")
+                return
+
+        self.hashes.append(new_hash)
+
         classification_result = self.classify_model.classify(scene_frame)
         print(f"Classification result for {caption_id}: {classification_result}")
 

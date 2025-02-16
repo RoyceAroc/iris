@@ -140,7 +140,7 @@ class LlavaModel(DeviceModel):
 
         # Prepare generation config
         generation_config = dict(
-            max_new_tokens=50,
+            max_new_tokens=20,
             num_beams=1,
             do_sample=True,
             temperature=0.8,

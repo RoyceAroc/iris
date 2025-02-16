@@ -1,4 +1,5 @@
 import requests
+import json
 
 from typing import Generator
 from .base import VendorModel, Frame, FrameStatus
@@ -15,24 +16,22 @@ class LlamaVisionModel(VendorModel):
         self.api_key = self.keys[self.current_key]
         self.base_url = "https://api.groq.com/openai/v1/chat/completions"
 
-        # Load and cache model prompts
-        with open("src/prompts/classify.txt", "r") as f:
-            self.classify_prompt = f.read().strip()
-        with open("src/prompts/caption.txt", "r") as f:
-            self.caption_prompt = f.read().strip()
-
-        # Prepare headers with the current key
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
         self.base_payload = {
             "model": "llama-3.2-11b-vision-preview",
-            "max_completion_tokens": 5,
-            "stop": "\n",
+            "max_completion_tokens": 50,
+            "temperature": 0.1,
+            "response_format": {"type": "json_object"},
         }
 
         self.session = requests.Session()
+
+        # Load prompt from external file
+        with open("src/prompts/classify.txt", "r") as f:
+            self.classify_prompt = f.read().strip()
 
     def __del__(self):
         self.session.close()
@@ -59,23 +58,17 @@ class LlamaVisionModel(VendorModel):
 
         payload = self.base_payload.copy()
         payload["messages"] = messages
-
         response = self.session.post(self.base_url, headers=self.headers, json=payload)
 
-        # If we get a 429, rotate key and return Hazard
+        # If we get a 429 error, rotate key and return hazard as a fallback
         if response.status_code == 429:
             self._rotate_key()
-            return FrameStatus.Hazard
+            return FrameStatus.Safe
 
-        # Otherwise, raise any other HTTP errors
         response.raise_for_status()
         resp_data = response.json()
-        content = resp_data["choices"][0]["message"]["content"].strip().lower()
-
-        if "no" in content:
-            return FrameStatus.Safe
-        else:
-            return FrameStatus.Hazard
+        result = json.loads(resp_data["choices"][0]["message"]["content"])
+        return FrameStatus.Safe if result["answer"] == "no" else FrameStatus.Hazard
 
     def caption(self, frame: Frame) -> Generator[str, None, None]:
         raise NotImplementedError()
