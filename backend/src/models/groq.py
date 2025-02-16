@@ -20,12 +20,6 @@ class LlamaVisionModel(VendorModel):
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
-        self.base_payload = {
-            "model": "llama-3.2-11b-vision-preview",
-            "max_completion_tokens": 50,
-            "temperature": 0.1,
-            "response_format": {"type": "json_object"},
-        }
 
         self.session = requests.Session()
 
@@ -56,7 +50,13 @@ class LlamaVisionModel(VendorModel):
             },
         ]
 
-        payload = self.base_payload.copy()
+        payload = {
+            "model": "llama-3.2-11b-vision-preview",
+            "max_completion_tokens": 50,
+            "temperature": 0.1,
+            "response_format": {"type": "json_object"},
+        }
+
         payload["messages"] = messages
         response = self.session.post(self.base_url, headers=self.headers, json=payload)
 
@@ -70,5 +70,33 @@ class LlamaVisionModel(VendorModel):
         result = json.loads(resp_data["choices"][0]["message"]["content"])
         return FrameStatus.Safe if result["answer"] == "no" else FrameStatus.Hazard
 
-    def caption(self, frame: Frame) -> Generator[str, None, None]:
-        raise NotImplementedError()
+    
+    def caption(self, frame: Frame) -> str:
+        image_data = frame.as_encoded()
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Describe what is happening in this image in 1 sentence."},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{image_data}"},
+                    },
+                ],
+            },
+        ]
+
+        payload = {
+            "model": "llama-3.2-90b-vision-preview",
+            "max_completion_tokens": 30,
+        }
+
+        payload["messages"] = messages
+
+        response = self.session.post(self.base_url, headers=self.headers, json=payload)
+
+        response.raise_for_status()
+        resp_data = response.json()
+        content = resp_data["choices"][0]["message"]["content"].strip().lower()
+
+        return content
