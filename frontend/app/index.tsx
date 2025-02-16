@@ -18,6 +18,7 @@ export default function Index() {
       console.log("Connected to WebSocket server");
     };
     ws.current.onmessage = (event) => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       const message = event.data;
       console.log("Received from WebSocket:", message);
       const [uid, token] = message.split("|");
