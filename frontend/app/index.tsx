@@ -1,10 +1,11 @@
-import { CameraView, CameraType } from 'expo-camera';
-import { useState, useEffect, useRef } from 'react';
-import { View } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid';
-import * as Speech from 'expo-speech';
+import { CameraView, CameraType } from "expo-camera";
+import { useState, useEffect, useRef } from "react";
+import { View } from "react-native";
+import { Audio } from "expo-av";
+import * as Haptics from "expo-haptics";
+import "react-native-get-random-values";
+import { v4 as uuidv4 } from "uuid";
+import * as Speech from "expo-speech";
 
 function base64ToArrayBuffer(base64: string) {
   const binaryString = atob(base64);
@@ -17,10 +18,22 @@ function base64ToArrayBuffer(base64: string) {
 }
 
 export default function Index() {
-  //console.log(window.speechSynthesis);
-  const thingToSay = 'fuck timothy';
-  Speech.speak(thingToSay);
-  const [facing, setFacing] = useState<CameraType>('back');
+  async function test() {
+    await Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      allowsRecordingIOS: false,
+      shouldDuckAndroid: true,
+    });
+
+    // Stop any previous speech and speak new content
+    Speech.stop();
+    Speech.speak("bro pls work", {
+      rate: 1.0,
+      language: "en", // Set appropriate language
+    });
+  }
+  test();
+  const [facing, setFacing] = useState<CameraType>("back");
   const cameraRef = useRef<CameraView>(null);
   const [isRecording, setIsRecording] = useState(false);
   const ws = useRef<WebSocket | null>(null);
@@ -41,7 +54,7 @@ export default function Index() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
 
-      setCaptions((prevCaptions: { [x: string]: string; }) => ({
+      setCaptions((prevCaptions: { [x: string]: string }) => ({
         ...prevCaptions,
         [uid]: prevCaptions[uid] ? prevCaptions[uid] + " " + token : token,
       }));
@@ -66,11 +79,18 @@ export default function Index() {
         if (cameraRef.current) {
           try {
             const uniqueId = uuidv4();
-            const photo = await cameraRef.current.takePictureAsync({ quality: 0.5, base64: true, skipProcessing: true });
+            const photo = await cameraRef.current.takePictureAsync({
+              quality: 0.5,
+              base64: true,
+              skipProcessing: true,
+              shutterSound: false,
+            });
             if (photo && photo.base64) {
               const imageBuffer = base64ToArrayBuffer(photo.base64);
               const idBuffer = new TextEncoder().encode(uniqueId + "|");
-              const combinedBuffer = new Uint8Array(idBuffer.length + imageBuffer.byteLength);
+              const combinedBuffer = new Uint8Array(
+                idBuffer.length + imageBuffer.byteLength
+              );
 
               combinedBuffer.set(idBuffer, 0);
               combinedBuffer.set(new Uint8Array(imageBuffer), idBuffer.length);
@@ -81,17 +101,26 @@ export default function Index() {
               }
             }
           } catch (error) {
-            console.error('Error taking pic:', error);
+            console.error("Error taking pic:", error);
           }
         }
-      }, 1000);
+      }, 2000);
     }
     return () => clearInterval(interval);
   }, [isRecording]);
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center' }}>
-      <CameraView mute={true} animateShutter={false} flash='off' ref={cameraRef} style={{ flex: 1 }} facing={facing} onCameraReady={() => setIsRecording((prev) => !prev)} />
-    </View >
+    <View style={{ flex: 1, justifyContent: "center" }}>
+      <CameraView
+        mute={true}
+        animateShutter={false}
+        skipProcessing={true}
+        flash="off"
+        ref={cameraRef}
+        style={{ flex: 1 }}
+        facing={facing}
+        onCameraReady={() => setIsRecording((prev) => !prev)}
+      />
+    </View>
   );
 }
