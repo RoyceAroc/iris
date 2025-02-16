@@ -1,6 +1,10 @@
+## Running our Application
+`cd frontend`
+`npx expo run`
+
 ## Inspiration 🤔
 Have you ever wondered how blind people cross the road? How imminent hazards like a "wet floor sign" or a pothole to their right might inflict harm? Here are some scary statistics:
-- A survey of 300 blind people found that about 40% experienced head height collisions at least once a year. [source] (https://www.researchgate.net/publication/228828914_Mobility-related_accidents_experienced_by_people_with_visual_impairment#:~:text=A%20survey%20of%20300%20blind,once%20a%20month%20%5B2%5D%20.)
+- A survey of 300 blind people found that about 40% experienced head height collisions at least once a year. [source](https://www.researchgate.net/publication/228828914_Mobility-related_accidents_experienced_by_people_with_visual_impairment#:~:text=A%20survey%20of%20300%20blind,once%20a%20month%20%5B2%5D%20.)
 -  68% of people with visual impairment had been directly exposed to at least one serious life event. [source](https://pmc.ncbi.nlm.nih.gov/articles/PMC8583190/)
 ![Risk Statistics](https://cdn.ncbi.nlm.nih.gov/pmc/blobs/56ad/8583190/7d6401a6ce75/ijerph-18-11536-g001.jpg)
 -  There is a 46% increased risk of road traffic crash among those with visual impairment. [source](The summary estimate revealed a 46% increased risk of road traffic crash among those with visual impairment)
