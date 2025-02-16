@@ -13,11 +13,12 @@ export default function Index() {
   const [captions, setCaptions] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    ws.current = new WebSocket("ws://127.0.0.1:9001");
+    ws.current = new WebSocket("ws://209.20.159.34:2222");
     ws.current.onopen = () => {
       console.log("Connected to WebSocket server");
     };
     ws.current.onmessage = (event) => {
+      console.log("Received message from WebSocket:", event.data);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       const message = event.data;
       console.log("Received from WebSocket:", message);
@@ -55,6 +56,7 @@ export default function Index() {
             if (photo && photo.base64) {
               const dataString = `${uniqueId}|${photo.base64}`;
               if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                console.log("Sending data to WebSocket");
                 ws.current.send(dataString);
               }
             }
