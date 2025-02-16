@@ -1,0 +1,22 @@
+[project]
+name = "iris"
+version = "0.1.0"
+description = "Firmware for the Iris headset"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "picows>=1.7.2",
+    "pillow>=11.1.0",
+    "pytest-asyncio>=0.25.3",
+    "pytest>=8.3.4",
+    "torch>=2.5.1",
+    "transformers>=4.48.1",
+    "accelerate>=1.3.0",
+    "uvloop>=0.21.0",
+    "opencv-python>=4.11.0.86",
+    "aiohttp>=3.11.12",
+]
+
+[tool.pyright]
+typeCheckingMode = "off" 
+

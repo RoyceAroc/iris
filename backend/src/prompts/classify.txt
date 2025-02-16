@@ -1,0 +1,1 @@
+Examine the image and follow these steps: 1. If there are obstacles, hazards, or signs a blind person can't interpret, respond 'yes.', 2. If no such hazards exist, respond 'no.' Respond only with 'yes' or 'no'.
