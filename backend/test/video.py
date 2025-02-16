@@ -74,7 +74,7 @@ class VideoClient(picows.WSListener):
 
 
 async def main() -> None:
-    transport, _ = await picows.ws_connect(VideoClient, "ws://209.20.159.34:2222")
+    transport, _ = await picows.ws_connect(VideoClient, "ws://0.0.0.0:2222")
     await transport.wait_disconnected()
 
 

@@ -15,14 +15,15 @@ transformers.logging.set_verbosity_error()
 class Server(picows.WSListener):
     def __init__(
         self,
-        caption_model: DeviceModel,
-        classify_model: VendorModel,
+        caption_model: DeviceModel | VendorModel,
+        classify_model: DeviceModel | VendorModel,
     ) -> None:
         self.caption_model = caption_model
         self.classify_model = classify_model
 
         self.hashes = deque(maxlen=3)
-        self.similarity_threshold = 5
+        self.similarity_threshold = 20
+        self.different_threshold = 50
 
         super().__init__()
 
@@ -32,28 +33,36 @@ class Server(picows.WSListener):
         # Compute perceptual hash of the new frame
         new_hash = imagehash.phash(scene_frame.as_image())
 
-        # Check similarity within last 3 frames of sliding window
+        # Check if the new frame is too similar to any of the last 3 frames
         for cached_hash in self.hashes:
             if (cached_hash - new_hash) <= self.similarity_threshold:
-                print(cached_hash - new_hash)
                 print(f"Skipping similar frame for {caption_id}")
                 return
 
+        # Check if the new frame is "very different" (>= different_threshold) from at least one of the last 3
+        significant_difference_found = any(
+            abs(cached_hash - new_hash) >= self.different_threshold
+            for cached_hash in self.hashes
+        )
+
         self.hashes.append(new_hash)
 
-        classification_result = self.classify_model.classify(scene_frame)
-        print(f"Classification result for {caption_id}: {classification_result}")
+        classification = self.classify_model.classify(scene_frame)
+        print(f"Classification result for {caption_id}: {classification}")
 
-        # If safe, don't process further
-        if classification_result == FrameStatus.Safe:
+        # Decide whether to stream inference
+        if classification == FrameStatus.Safe and not significant_difference_found:
+            print(
+                "Skipping frame since classification is safe or significant difference found"
+            )
             return
 
-        # If hazard, stream all tokens
+        # Stream inference tokens
         for token in self.caption_model.caption(scene_frame):
             payload = f"{caption_id}|{token}".encode("utf-8")
             transport.send(picows.WSMsgType.TEXT, payload)
 
-        # Send end token for hazard cases
+        # Send end token
         end_payload = f"{caption_id}|<end>".encode("utf-8")
         transport.send(picows.WSMsgType.TEXT, end_payload)
 

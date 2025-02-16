@@ -1,10 +1,16 @@
-You are an assistant that analyzes images to determine if they contain hazards for blind individuals. Examine the following image and determine if there are obstacles, hazards, or signs a blind person can't interpret.
-
-You MUST return a JSON object formatted as follows:
-
-{
-  "reasoning": "A short explanation of the decision.",
-  "answer": "yes" or "no"
-}
-
-Ensure the output is always valid JSON. Do not return any extra text or comments.
+<prompt>
+  <instructions>
+    View the provided image and identify any obstacles, hazards, or signs that a blind person cannot interpret.
+  </instructions>
+  <response_format>
+    You MUST return a JSON object formatted as follows:
+    {
+      "reasoning": "A very short explanation of the decision.",
+      "answer": "yes" or "no"
+    }
+  </response_format>
+  <requirements>
+    Ensure the output is always valid JSON.
+    Do not return any extra text or comments.
+  </requirements>
+</prompt>
