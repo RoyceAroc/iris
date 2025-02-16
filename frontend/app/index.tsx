@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
+import * as Speech from 'expo-speech';
 
 function base64ToArrayBuffer(base64: string) {
   const binaryString = atob(base64);
@@ -16,6 +17,9 @@ function base64ToArrayBuffer(base64: string) {
 }
 
 export default function Index() {
+  //console.log(window.speechSynthesis);
+  const thingToSay = 'fuck timothy';
+  Speech.speak(thingToSay);
   const [facing, setFacing] = useState<CameraType>('back');
   const cameraRef = useRef<CameraView>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -87,7 +91,7 @@ export default function Index() {
 
   return (
     <View style={{ flex: 1, justifyContent: 'center' }}>
-      <CameraView flash='off' ref={cameraRef} style={{ flex: 1 }} facing={facing} onCameraReady={() => setIsRecording((prev) => !prev)} />
+      <CameraView mute={true} animateShutter={false} flash='off' ref={cameraRef} style={{ flex: 1 }} facing={facing} onCameraReady={() => setIsRecording((prev) => !prev)} />
     </View >
   );
 }
