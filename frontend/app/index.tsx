@@ -6,6 +6,7 @@ import * as Haptics from "expo-haptics";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
 import * as Speech from "expo-speech";
+import * as ImageManipulator from 'expo-image-manipulator';
 
 function base64ToArrayBuffer(base64: string) {
   const binaryString = atob(base64);
@@ -79,7 +80,7 @@ export default function Index() {
         isSpeaking.current = false;
       },
       onError: () => {
-        isSpeaking.current = false; 
+        isSpeaking.current = false;
       },
     });
   }
@@ -98,18 +99,25 @@ export default function Index() {
               shutterSound: false,
             });
             if (photo && photo.base64) {
-              const imageBuffer = base64ToArrayBuffer(photo.base64);
-              const idBuffer = new TextEncoder().encode(uniqueId + "|");
-              const combinedBuffer = new Uint8Array(
-                idBuffer.length + imageBuffer.byteLength
+              const resizedPhoto = await ImageManipulator.manipulateAsync(
+                photo.uri,
+                [{ resize: { width: 128, height: 128 } }],
+                { base64: true }
               );
+              if (resizedPhoto && resizedPhoto.base64) {
+                const imageBuffer = base64ToArrayBuffer(resizedPhoto.base64);
+                const idBuffer = new TextEncoder().encode(uniqueId + "|");
+                const combinedBuffer = new Uint8Array(
+                  idBuffer.length + imageBuffer.byteLength
+                );
 
-              combinedBuffer.set(idBuffer, 0);
-              combinedBuffer.set(new Uint8Array(imageBuffer), idBuffer.length);
+                combinedBuffer.set(idBuffer, 0);
+                combinedBuffer.set(new Uint8Array(imageBuffer), idBuffer.length);
 
-              if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-                console.log("Sending binary data to WebSocket");
-                ws.current.send(combinedBuffer);
+                if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                  console.log("Sending binary data to WebSocket");
+                  ws.current.send(combinedBuffer);
+                }
               }
             }
           } catch (error) {
