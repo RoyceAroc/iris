@@ -1,7 +1,6 @@
 import { CameraView, CameraType } from 'expo-camera';
 import { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+import { View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
@@ -10,17 +9,6 @@ export default function Index() {
   const [facing, setFacing] = useState<CameraType>('back');
   const cameraRef = useRef<CameraView>(null);
   const [isRecording, setIsRecording] = useState(false);
-  const localFolderPath = FileSystem.documentDirectory + 'captured_frames/';
-  useEffect(() => {
-    async function createDirectory() {
-      const dirInfo = await FileSystem.getInfoAsync(localFolderPath);
-      if (!dirInfo.exists) {
-        await FileSystem.makeDirectoryAsync(localFolderPath, { intermediates: true });
-        console.log(`Created directory at: ${localFolderPath}`);
-      }
-    }
-    createDirectory();
-  }, []);
 
   useEffect(() => {
     let interval: string | number | NodeJS.Timeout | undefined;
@@ -66,31 +54,8 @@ export default function Index() {
     }
   }
   return (
-    <View style={styles.container}>
-      <CameraView flash='off' ref={cameraRef} style={styles.camera} facing={facing} onCameraReady={() => setIsRecording((prev) => !prev)}>
-      </CameraView>
+    <View style={{ flex: 1, justifyContent: 'center'}}>
+      <CameraView flash='off' ref={cameraRef} style={{ flex: 1 }} facing={facing} onCameraReady={() => setIsRecording((prev) => !prev)} />
     </View >
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  message: {
-    textAlign: 'center',
-    paddingBottom: 10,
-  },
-  camera: {
-    flex: 1,
-  },
-  buttonContainer: {
-    position: 'absolute',
-    bottom: 50,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-});
-
