@@ -39,12 +39,9 @@ export default function Index() {
       const response = await fetch(URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain',
         },
-        body: JSON.stringify({
-          image: imageBase64,
-          id: uniqueId
-        }),
+        body: `${uniqueId}|${imageBase64}`,
       });
       const data = await response.json();
       return data.is_hazard;
