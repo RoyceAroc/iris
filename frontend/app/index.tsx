@@ -1,11 +1,11 @@
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useState, useEffect, useRef } from 'react';
-import { Button, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import * as Haptics from 'expo-haptics';
 
 export default function Index() {
   const [facing, setFacing] = useState<CameraType>('back');
-  const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [isRecording, setIsRecording] = useState(false);
   const localFolderPath = FileSystem.documentDirectory + 'captured_frames/';
@@ -26,10 +26,7 @@ export default function Index() {
       interval = setInterval(async () => {
         if (cameraRef.current) {
           try {
-            const photo = await cameraRef.current.takePictureAsync({
-              base64: false,
-              skipProcessing: true,
-            });
+            const photo = await cameraRef.current.takePictureAsync({ base64: false });
             if (photo) {
               const fileUri = `${localFolderPath}frame_${Date.now()}.jpg`;
               await FileSystem.moveAsync({
@@ -37,6 +34,10 @@ export default function Index() {
                 to: fileUri,
               });
               console.log(`Saved frame to: ${fileUri}`);
+              const isHazard = await checkForHazard(fileUri);
+              if (isHazard) {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+              }
             }
           } catch (error) {
             console.error('Error capturing frame:', error);
@@ -47,28 +48,37 @@ export default function Index() {
     return () => clearInterval(interval);
   }, [isRecording]);
 
-  if (!permission) {
-    return <View />;
+  function createFormData(imageUri: any) {
+    const formData = new FormData();
+    const file = {
+      uri: imageUri,
+      name: `frame_${Date.now()}.jpg`,
+      type: 'image/jpg',
+    };
+    formData.append('image', file as any);
+    return formData;
   }
 
-  if (!permission.granted) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.message}>We need your permission to show the camera</Text>
-        <Button onPress={requestPermission} title="Grant Permission" />
-      </View>
-    );
+  async function checkForHazard(imageUri: any) {
+    try {
+      const URL = "SOMEHTING HERE"
+      const response = await fetch(URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        body: createFormData(imageUri),
+      });
+      const data = await response.json();
+      return data.is_hazard;
+    } catch (error) {
+      console.error('Error sending image to backend:', error);
+      return false;
+    }
   }
-
   return (
     <View style={styles.container}>
       <CameraView ref={cameraRef} style={styles.camera} facing={facing} onCameraReady={() => setIsRecording((prev) => !prev)}>
-        {/* <View style={styles.buttonContainer}>
-          <Button
-            title={isRecording ? 'Stop Capturing' : 'Start Capturing'}
-            onPress={() => setIsRecording((prev) => !prev)}
-          />
-        </View> */}
       </CameraView>
     </View >
   );
