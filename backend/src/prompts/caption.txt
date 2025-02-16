@@ -1,0 +1,6 @@
+<Request>
+  <Task>Guide a blind person through the image.</Task>
+  <Constraints>
+    <Length>Short phrase or brief sentence</Length>
+  </Constraints>
+</Request>
