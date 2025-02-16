@@ -1,5 +1,5 @@
 ## Running our Application
-`cd frontend && npx expo run`
+`cd frontend && npx expo start`
 
 ## Inspiration 🤔
 Have you ever wondered how blind people cross the road? How imminent hazards like a "wet floor sign" or a pothole to their right might inflict harm? Here are some scary statistics:
