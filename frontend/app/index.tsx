@@ -24,6 +24,8 @@ export default function Index() {
   const ws = useRef<WebSocket | null>(null);
   const [captions, setCaptions] = useState<Record<string, string>>({});
   const visitedUIDs = useRef<Set<string>>(new Set());
+  const speechQueue = useRef<string[]>([]);
+  const isSpeaking = useRef<boolean>(false);
 
   useEffect(() => {
     ws.current = new WebSocket("ws://209.20.159.34:2222");
@@ -40,16 +42,7 @@ export default function Index() {
       }
 
       if (token.trim() == "<end>") {
-        Audio.setAudioModeAsync({
-          playsInSilentModeIOS: true,
-          allowsRecordingIOS: false,
-          shouldDuckAndroid: true,
-        });
-        Speech.stop();
-        Speech.speak(captions[uid], {
-          rate: 1.0,
-          language: "en",
-        });
+        startSpeech(captions[uid]);
       }
 
       if (captions[uid]) {
@@ -70,6 +63,26 @@ export default function Index() {
       }
     };
   }, []);
+
+  function startSpeech(text: string) {
+    if (!text || isSpeaking.current) return;
+    isSpeaking.current = true;
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      allowsRecordingIOS: false,
+      shouldDuckAndroid: true,
+    });
+    Speech.speak(text, {
+      rate: 1.0,
+      language: "en",
+      onDone: () => {
+        isSpeaking.current = false;
+      },
+      onError: () => {
+        isSpeaking.current = false; 
+      },
+    });
+  }
 
   useEffect(() => {
     let interval: string | number | NodeJS.Timeout | undefined;
