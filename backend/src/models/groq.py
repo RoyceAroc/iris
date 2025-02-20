@@ -8,7 +8,7 @@ from .base import VendorModel, Frame, FrameStatus
 class LlamaVisionModel(VendorModel):
     def __init__(self) -> None:
         self.keys = [
-            "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",
+            "API_KEY_HERE",
         ]
         self.current_key_index = 0
         self.api_key = self.keys[self.current_key_index]
